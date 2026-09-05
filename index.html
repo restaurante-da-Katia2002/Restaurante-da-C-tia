@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurante da Cátia - Sabor que Conquista</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #fceea7; color: #333; }
+        header { background-color: #580000; color: #ffcc00; text-align: center; padding: 20px; border-bottom: 4px solid #ffcc00; }
+        .logo { max-width: 180px; width: 100%; height: auto; display: block; margin: 0 auto 10px auto; }
+        .slogan { font-style: italic; color: #ffffff; font-weight: bold; }
+        .gallery { display: flex; justify-content: center; gap: 10px; padding: 15px; background: #580000; }
+        .gallery img { width: 30%; max-width: 150px; border-radius: 8px; object-fit: cover; border: 2px solid #ffcc00; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .info-card { background: #fff8d6; border: 2px solid #580000; border-radius: 8px; padding: 15px; margin-bottom: 20px; color: #580000; }
+        .notice-fechado { background-color: #f8d7da; color: #721c24; border: 2px solid #f5c6cb; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-weight: bold; display: none; }
+        .item-card { display: flex; align-items: center; justify-content: space-between; background: white; padding: 15px; margin-bottom: 12px; border-radius: 8px; box-shadow: 0 3px 6px rgba(0,0,0,0.15); border-left: 5px solid #580000; }
+        .item-card.esgotado-card { opacity: 0.6; }
+        .item-card img { width: 80px; height: 80px; border-radius: 8px; object-fit: cover; }
+        .item-info { flex: 1; margin-left: 15px; }
+        .item-info h3 { margin: 0 0 5px 0; font-size: 1.1em; color: #580000; }
+        .item-info p { margin: 2px 0; font-size: 0.9em; color: #555; }
+        .item-info .price { font-weight: bold; color: #d32f2f; font-size: 1.1em; }
+        .counter { display: flex; align-items: center; gap: 10px; }
+        .counter button { width: 32px; height: 32px; font-weight: bold; cursor: pointer; border: 1px solid #580000; background: #ffcc00; color: #580000; border-radius: 4px; font-size: 1.1em; }
+        .tag-esgotado { color: #e74c3c; font-weight: bold; font-size: 0.9em; border: 1px solid #e74c3c; padding: 4px 8px; border-radius: 4px; }
+        .client-box { background: white; padding: 15px; margin-top: 15px; border-radius: 8px; border: 1px solid #ccc; }
+        .client-box label { font-weight: bold; color: #580000; display: block; margin-bottom: 5px; margin-top: 10px; }
+        .client-box label:first-child { margin-top: 0; }
+        .client-box input { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; font-size: 1em; margin-bottom: 5px; }
+        .total-box { background: #fff; padding: 15px; text-align: right; font-size: 1.2em; font-weight: bold; border-radius: 8px; margin-top: 15px; border: 2px solid #580000; display: flex; justify-content: space-between; align-items: center; color: #580000; }
+        .btn-clear { background-color: #e74c3c; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-size: 0.9em; font-weight: bold; }
+        .btn-whatsapp { display: block; width: 100%; padding: 15px; background-color: #25D366; color: white; text-align: center; text-decoration: none; font-weight: bold; border-radius: 8px; margin-top: 15px; box-sizing: border-box; font-size: 1.1em; }
+        .btn-call { display: block; width: 100%; padding: 15px; background-color: #580000; color: #ffcc00; text-align: center; text-decoration: none; font-weight: bold; border-radius: 8px; margin-top: 10px; box-sizing: border-box; font-size: 1.1em; border: 1px solid #ffcc00; }
+        .desativado { opacity: 0.5; pointer-events: none; }
+    </style>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body>
+
+    <header>
+        <img src="logo.png" alt="Logo Restaurante da Cátia" class="logo">
+        <h1>Restaurante da Cátia</h1>
+        <p class="slogan">Restaurante da Cátia – sabor que conquista!</p>
+        <p>Venha saborear pratos deliciosos preparados com muito carinho!</p>
+    </header>
+
+    <section class="gallery">
+        <img src="lula.jpg" alt="Lula">
+        <img src="frango.jpg" alt="Frango">
+        <img src="peixe.jpg" alt="Peixe">
+    </section>
+
+    <div class="container">
+        <div id="avisoFechado" class="notice-fechado">
+            🚫 O Restaurante da Cátia encontra-se FECHADO de momento.<br>
+            <small style="font-weight: normal; margin-top: 5px; display: block;">Estaremos disponíveis novamente no horário normal.</small>
+        </div>
+
+        <div class="info-card">
+            <p><strong>📍 Localização:</strong> Paquite</p>
+            <p><strong>🕒 Horário de Atendimento:</strong> 17:40 às <span id="exibirHoraFecho">22:30</span></p>
+            <p><strong>📞 Reservas / Contacto:</strong> 862356294</p>
+        </div>
+
+        <h2>Menu de Pratos (160 MT)</h2>
+        <p style="margin-bottom: 15px; color: #580000; font-size: 0.95em;"><em>* Todos os pratos acompanham com Batata Frita, Salada e Pão.</em></p>
+
+        <div id="areaPedidos">
+            <div class="item-card" id="cardLula">
+                <img src="lula.jpg" alt="Prato de Lula">
+                <div class="item-info">
+                    <h3>Lula Frita</h3>
+                    <p>Acompanha: Batata frita, salada e pão</p>
+                    <p class="price">160 MT</p>
+                </div>
+                <div class="counter" id="boxLula">
+                    <button onclick="alterarQtd('qtdLula', -1)">-</button>
+                    <span id="qtdLula">0</span>
+                    <button onclick="alterarQtd('qtdLula', 1)">+</button>
+                </div>
+            </div>
+
+            <div class="item-card" id="cardFrango">
+                <img src="frango.jpg" alt="Prato de Frango">
+                <div class="item-info">
+                    <h3>Frango Grelhado</h3>
+                    <p>Acompanha: Batata frita, salada e pão</p>
+                    <p class="price">160 MT</p>
+                </div>
+                <div class="counter" id="boxFrango">
+                    <button onclick="alterarQtd('qtdFrango', -1)">-</button>
+                    <span id="qtdFrango">0</span>
+                    <button onclick="alterarQtd('qtdFrango', 1)">+</button>
+                </div>
+            </div>
+
+            <div class="item-card" id="cardFigado">
+                <img src="figado.jpg" alt="Prato de Fígado">
+                <div class="item-info">
+                    <h3>Fígado da Casa</h3>
+                    <p>Acompanha: Batata frita, salada e pão</p>
+                    <p class="price">160 MT</p>
+                </div>
+                <div class="counter" id="boxFigado">
+                    <button onclick="alterarQtd('qtdFigado', -1)">-</button>
+                    <span id="qtdFigado">0</span>
+                    <button onclick="alterarQtd('qtdFigado', 1)">+</button>
+                </div>
+            </div>
+
+            <div class="item-card" id="cardPeixe">
+                <img src="peixe.jpg" alt="Prato de Peixe">
+                <div class="item-info">
+                    <h3>Peixe Frito/Grelhado</h3>
+                    <p>Acompanha: Batata frita, salada e pão</p>
+                    <p class="price">160 MT</p>
+                </div>
+                <div class="counter" id="boxPeixe">
+                    <button onclick="alterarQtd('qtdPeixe', -1)">-</button>
+                    <span id="qtdPeixe">0</span>
+                    <button onclick="alterarQtd('qtdPeixe', 1)">+</button>
+                </div>
+            </div>
+
+            <div class="client-box">
+                <label for="nomeCliente">Seu Nome:</label>
+                <input type="text" id="nomeCliente" placeholder="Ex: Cliente">
+
+                <label for="horaChegada">A que horas pensa aparecer?</label>
+                <input type="time" id="horaChegada" value="19:00" min="17:40">
+            </div>
+
+            <div class="total-box">
+                <div>Total: <span id="total-valor">0 MT</span></div>
+                <button class="btn-clear" onclick="limparPedido()">Limpar</button>
+            </div>
+
+            <a href="#" id="btnEnviarWhatsapp" class="btn-whatsapp" onclick="enviarWhatsapp()">Pedir via WhatsApp</a>
+        </div>
+
+        <a href="tel:862356294" class="btn-call">Ligar Direto (Chamada Normal)</a>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+          apiKey: "AIzaSyCwwMaLp8KTK9kKsnaSRWQto1XsiR1tzIw",
+          authDomain: "restaurante-da-katia.firebaseapp.com",
+          databaseURL: "https://restaurante-da-katia-default-rtdb.firebaseio.com",
+          projectId: "restaurante-da-katia",
+          storageBucket: "restaurante-da-katia.firebasestorage.app",
+          messagingSenderId: "30654757331",
+          appId: "1:30654757331:web:6b092238eb3e06596ad726"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const database = firebase.database();
+
+        const precoUnitario = 160;
+        let horaFechoAtual = "22:30";
+        let estaAberto = true;
+
+        window.onload = function() {
+            database.ref('configuracoes').on('value', (snapshot) => {
+                const data = snapshot.val() || {};
+                
+                if (data.restauranteAberto === false) {
+                    estaAberto = false;
+                    document.getElementById('avisoFechado').style.display = 'block';
+                    document.getElementById('areaPedidos').classList.add('desativado');
+                } else {
+                    estaAberto = true;
+                    document.getElementById('avisoFechado').style.display = 'none';
+                    document.getElementById('areaPedidos').classList.remove('desativado');
+                }
+
+                if (data.fechoHora) {
+                    horaFechoAtual = data.fechoHora;
+                    document.getElementById('exibirHoraFecho').innerText = data.fechoHora;
+                    document.getElementById('horaChegada').max = data.fechoHora;
+                }
+            });
+
+            database.ref('estoque').on('value', (snapshot) => {
+                const estoque = snapshot.val() || {};
+                ['Lula', 'Frango', 'Figado', 'Peixe'].forEach(item => {
+                    if (estoque[item] === false) {
+                        marcarEsgotado(item);
+                    } else {
+                        marcarDisponivel(item);
+                    }
+                });
+            });
+        };
+
+        function marcarEsgotado(item) {
+            let card = document.getElementById('card' + item);
+            let box = document.getElementById('box' + item);
+            if (card) card.classList.add('esgotado-card');
+            if (box) box.innerHTML = '<span class="tag-esgotado">ESGOTADO</span>';
+        }
+
+        function marcarDisponivel(item) {
+            let card = document.getElementById('card' + item);
+            let box = document.getElementById('box' + item);
+            if (card) card.classList.remove('esgotado-card');
+            if (box) {
+                box.innerHTML = `
+                    <button onclick="alterarQtd('qtd${item}', -1)">-</button>
+                    <span id="qtd${item}">0</span>
+                    <button onclick="alterarQtd('qtd${item}', 1)">+</button>
+                `;
+            }
+        }
+
+        function alterarQtd(id, delta) {
+            if(!estaAberto) return;
+            let el = document.getElementById(id);
+            if(!el) return;
+            let valor = parseInt(el.innerText) + delta;
+            if (valor < 0) valor = 0;
+            el.innerText = valor;
+            atualizarTotal();
+        }
+
+        function atualizarTotal() {
+            let qLula = document.getElementById('qtdLula') ? parseInt(document.getElementById('qtdLula').innerText) : 0;
+            let qFrango = document.getElementById('qtdFrango') ? parseInt(document.getElementById('qtdFrango').innerText) : 0;
+            let qFigado = document.getElementById('qtdFigado') ? parseInt(document.getElementById('qtdFigado').innerText) : 0;
+            let qPeixe = document.getElementById('qtdPeixe') ? parseInt(document.getElementById('qtdPeixe').innerText) : 0;
+
+            let total = (qLula + qFrango + qFigado + qPeixe) * precoUnitario;
+            document.getElementById('total-valor').innerText = total + " MT";
+        }
+
+        function limparPedido() {
+            if(document.getElementById('qtdLula')) document.getElementById('qtdLula').innerText = '0';
+            if(document.getElementById('qtdFrango')) document.getElementById('qtdFrango').innerText = '0';
+            if(document.getElementById('qtdFigado')) document.getElementById('qtdFigado').innerText = '0';
+            if(document.getElementById('qtdPeixe')) document.getElementById('qtdPeixe').innerText = '0';
+            document.getElementById('nomeCliente').value = '';
+            document.getElementById('horaChegada').value = '19:00';
+            atualizarTotal();
+        }
+
+        function enviarWhatsapp() {
+            if(!estaAberto) {
+                alert("O restaurante encontra-se FECHADO neste momento.");
+                return;
+            }
+
+            let nome = document.getElementById('nomeCliente').value.trim();
+            let hora = document.getElementById('horaChegada').value;
+            
+            let qLula = document.getElementById('qtdLula') ? parseInt(document.getElementById('qtdLula').innerText) : 0;
+            let qFrango = document.getElementById('qtdFrango') ? parseInt(document.getElementById('qtdFrango').innerText) : 0;
+            let qFigado = document.getElementById('qtdFigado') ? parseInt(document.getElementById('qtdFigado').innerText) : 0;
+            let qPeixe = document.getElementById('qtdPeixe') ? parseInt(document.getElementById('qtdPeixe').innerText) : 0;
+            let total = document.getElementById('total-valor').innerText;
+
+            if ((qLula + qFrango + qFigado + qPeixe) === 0) {
+                alert("Por favor, selecione pelo menos um prato disponível.");
+                return;
+            }
+
+            if (nome === "") {
+                alert("Por favor, preencha o seu nome.");
+                document.getElementById('nomeCliente').focus();
+                return;
+            }
+
+            database.ref('pedidos').push({
+                cliente: nome,
+                horaPrevisao: hora,
+                lula: qLula,
+                frango: qFrango,
+                figado: qFigado,
+                peixe: qPeixe,
+                total: total,
+                dataCriacao: new Date().toISOString()
+            });
+
+            let mensagem = "*NOVO PEDIDO - RESTAURANTE DA CÁTIA*%0A%0A";
+            mensagem += "*Cliente:* " + nome + "%0A%0A";
+            mensagem += "*Pratos Escolhidos:*%0A";
+            if (qLula > 0) mensagem += "• " + qLula + "x Batata Frita com Salada e Lula Frita%0A";
+            if (qFrango > 0) mensagem += "• " + qFrango + "x Batata Frita com Salada e Frango Grelhado%0A";
+            if (qFigado > 0) mensagem += "• " + qFigado + "x Batata Frita com Salada e Fígado da Casa%0A";
+            if (qPeixe > 0) mensagem += "• " + qPeixe + "x Batata Frita com Salada e Peixe Frito/Grelhado%0A";
+
+            mensagem += "%0A🕒 *Previsão de Chegada:* " + hora + "%0A";
+            mensagem += "💰 *Total a Pagar:* " + total + "%0A%0A";
+
+            window.open("https://wa.me/258862356294?text=" + mensagem, "_blank");
+        }
+    </script>
+</body>
+</html>
